@@ -266,6 +266,7 @@ static void ble_nus_chars_received_uart_print(uint8_t * p_data, uint16_t data_le
 void uart_event_handle(app_uart_evt_t * p_event)
 {
     static uint8_t data_array[BLE_NUS_MAX_DATA_LEN];
+    static uint8_t string_message[BLE_NUS_MAX_DATA_LEN];
     static uint16_t index = 0;
     uint32_t ret_val;
 
@@ -280,20 +281,27 @@ void uart_event_handle(app_uart_evt_t * p_event)
                 (data_array[index - 1] == '\r') ||
                 (index >= (m_ble_nus_max_data_len)))
             {
-                NRF_LOG_DEBUG("Ready to send data over BLE NUS");
-                NRF_LOG_HEXDUMP_DEBUG(data_array, index);
-
-                do
+                if(isConnected)
                 {
-                    ret_val = ble_nus_c_string_send(&m_ble_nus_c, data_array, index);
-                    if ( (ret_val != NRF_ERROR_INVALID_STATE) && (ret_val != NRF_ERROR_RESOURCES) )
-                    {
-                        APP_ERROR_CHECK(ret_val);
-                    }
-                } while (ret_val == NRF_ERROR_RESOURCES);
+                    NRF_LOG_DEBUG("Ready to send data over BLE NUS");
+                    NRF_LOG_HEXDUMP_DEBUG(data_array, index);
 
+                    do
+                    {
+                        ret_val = ble_nus_c_string_send(&m_ble_nus_c, data_array, index);
+                        if ( (ret_val != NRF_ERROR_INVALID_STATE) && (ret_val != NRF_ERROR_RESOURCES) )
+                        {
+                            APP_ERROR_CHECK(ret_val);
+                        }
+                    } while (ret_val == NRF_ERROR_RESOURCES);
+                }
+                memset(string_message, '\0', BLE_NUS_MAX_DATA_LEN);
+                strcpy(string_message, data_array);
+
+                memset(data_array, '\0', BLE_NUS_MAX_DATA_LEN);
+
+                NRF_LOG_INFO("DATA RECEIVED = %s", string_message);
                 index = 0;
-                NRF_LOG_INFO("DATA RECEIVED = %s\n", data_array);
             }
             break;
 
@@ -613,6 +621,7 @@ static void idle_state_handle(void)
         nrf_pwr_mgmt_run();
     }
 }
+
 
 /**@brief TODO
  *
