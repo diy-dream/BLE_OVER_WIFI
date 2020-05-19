@@ -76,6 +76,9 @@
 
 #define ECHOBACK_BLE_UART_DATA  1                                       /**< Echo the UART data that is received over the Nordic UART Service (NUS) back to the sender. */
 
+#define LED_STATUS_PIN          7
+#define CONNECTION_BUTTON_PIN   8
+
 
 BLE_NUS_C_DEF(m_ble_nus_c);                                             /**< BLE Nordic UART Service (NUS) client instance. */
 NRF_BLE_GATT_DEF(m_gatt);                                               /**< GATT module instance. */
@@ -345,7 +348,7 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
             err_code = ble_nus_c_tx_notif_enable(p_ble_nus_c);
             APP_ERROR_CHECK(err_code);
             NRF_LOG_INFO("Connected to device with Nordic UART Service.");
-            nrf_drv_gpiote_out_clear(7);
+            nrf_drv_gpiote_out_clear(LED_STATUS_PIN);
             isConnected = true;
             break;
 
@@ -355,7 +358,7 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
 
         case BLE_NUS_C_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
-            nrf_drv_gpiote_out_set(7);
+            nrf_drv_gpiote_out_set(LED_STATUS_PIN);
             isConnected = false;
             if(isBleCentralOn)
             {
@@ -675,21 +678,21 @@ void gpio_init(void)
     err_code = nrf_drv_gpiote_init();
     APP_ERROR_CHECK(err_code);
 
-    // OUTPUT PIN INIT
+    // LED_STATUS_PIN INIT
     nrf_drv_gpiote_out_config_t out_config = GPIOTE_CONFIG_OUT_SIMPLE(false);
-    err_code = nrf_drv_gpiote_out_init(7, &out_config);
+    err_code = nrf_drv_gpiote_out_init(LED_STATUS_PIN, &out_config);
     APP_ERROR_CHECK(err_code);
 
-    nrf_drv_gpiote_out_set(7);
+    nrf_drv_gpiote_out_set(LED_STATUS_PIN);
 
-    // INPUT PIN INIT
+    // CONNECTION_BUTTON_PIN INIT
     nrf_drv_gpiote_in_config_t in_config = GPIOTE_CONFIG_IN_SENSE_HITOLO(true);
     in_config.pull = NRF_GPIO_PIN_PULLUP;
 
-    err_code = nrf_drv_gpiote_in_init(6, &in_config, in_pin_handler);
+    err_code = nrf_drv_gpiote_in_init(CONNECTION_BUTTON_PIN, &in_config, in_pin_handler);
     APP_ERROR_CHECK(err_code);
 
-    nrf_drv_gpiote_in_event_enable(6, true);
+    nrf_drv_gpiote_in_event_enable(CONNECTION_BUTTON_PIN, true);
 }
 
 
